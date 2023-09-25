@@ -2,7 +2,11 @@ module github.com/rickCrz7/todos-mongo
 
 go 1.21.0
 
-require go.mongodb.org/mongo-driver v1.12.1
+require (
+	github.com/google/uuid v1.3.1
+	github.com/gorilla/mux v1.8.0
+	go.mongodb.org/mongo-driver v1.12.1
+)
 
 require (
 	github.com/golang/snappy v0.0.1 // indirect
