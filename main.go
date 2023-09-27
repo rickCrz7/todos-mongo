@@ -31,12 +31,12 @@ func main() {
 	for cmd != "quit" {
 		switch cmd {
 		case "api":
-			// ownersDao := &OwnerDaoImpl{client: client}
+			ownersDao := &OwnerDaoImpl{client: client}
 			todosDao := &TodoDaoImpl{client: client}
 
 			r := mux.NewRouter()
 			NewTodoHandler(todosDao, r)
-
+			NewOwnerHandler(ownerDao, r)
 			log.Println("Starting server on port 8080")
 			log.Fatal(http.ListenAndServe(":8080", r))
 		case "cli":

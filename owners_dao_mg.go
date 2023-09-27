@@ -9,7 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type OwnersDao interface {
+type OwnerDao interface {
 	GetAll() ([]*Owner, error)
 	Get(id string) (*Owner, error)
 	Create(owner *Owner) error
@@ -17,11 +17,15 @@ type OwnersDao interface {
 	Delete(id string) error
 }
 
-type OwnerDaoImpl struct {
+type OwnerDaoMgImpl struct {
 	client *mongo.Client
 }
 
-func (dao *OwnerDaoImpl) GetAll() ([]*Owner, error) {
+func NewMongoOwnerDao(client *mongo.Client) OwnerDao {
+	return &OwnerDaoMgImpl{client}
+}
+
+func (dao *OwnerDaoMgImpl) GetAll() ([]*Owner, error) {
 	ctx := context.Background()
 	owners := []*Owner{}
 	collection := dao.client.Database("todos").Collection("owners")
@@ -40,47 +44,43 @@ func (dao *OwnerDaoImpl) GetAll() ([]*Owner, error) {
 	return owners, nil
 }
 
-func (dao *OwnerDaoImpl) Get(id string) (*Owner, error) {
+func (dao *OwnerDaoMgImpl) Get(id string) (*Owner, error) {
 	ctx := context.Background()
 	owner := &Owner{}
 	collection := dao.client.Database("todos").Collection("owners")
-	err := collection.FindOne(ctx, bson.M{"_id": id}).Decode(owner)
+	err := collection.FindOne(ctx, map[string]string{"_id": id}).Decode(&owner)
 	if err != nil {
-		return nil, errors.New("could not get owner: " + err.Error())
+		return nil, err
 	}
 	return owner, nil
 }
 
-func (dao *OwnerDaoImpl) Create(owner *Owner) error {
+func (dao *OwnerDaoMgImpl) Create(owner *Owner) error {
 	ctx := context.Background()
 	collection := dao.client.Database("todos").Collection("owners")
 	_, err := collection.InsertOne(ctx, owner)
 	if err != nil {
-		return errors.New("could not create owner: " + err.Error())
+		return err
 	}
 	return nil
 }
 
-func (dao *OwnerDaoImpl) Update(owner *Owner) error {
+func (dao *OwnerDaoMgImpl) Update(owner *Owner) error {
 	ctx := context.Background()
 	collection := dao.client.Database("todos").Collection("owners")
-	_, err := collection.UpdateOne(ctx, bson.M{"_id": owner.ID}, bson.M{"$set": owner})
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": owner.ID}, bson.M{"$set": bson.M{"name": owner.Name}})
 	if err != nil {
-		return errors.New("could not update owner: " + err.Error())
+		return err
 	}
 	return nil
 }
 
-func (dao *OwnerDaoImpl) Delete(id string) error {
+func (dao *OwnerDaoMgImpl) Delete(id string) error {
 	ctx := context.Background()
 	collection := dao.client.Database("todos").Collection("owners")
 	_, err := collection.DeleteOne(ctx, bson.M{"_id": id})
 	if err != nil {
-		return errors.New("could not delete owner: " + err.Error())
+		return err
 	}
 	return nil
-}
-
-func NewOwnerDao(client *mongo.Client) OwnersDao {
-	return &OwnerDaoImpl{client}
 }
